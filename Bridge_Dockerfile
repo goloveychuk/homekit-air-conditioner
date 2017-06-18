@@ -1,0 +1,11 @@
+from ubuntu
+run apt-get update && apt-get install -y curl
+run curl -sL https://deb.nodesource.com/setup_6.x | bash -
+run apt-get install -y nodejs python build-essential libavahi-compat-libdnssd-dev git
+
+run npm i homebridge -g --unsafe-perm
+run npm i -g git://github.com/PJCzx/homebridge-thermostat.git#master
+
+add ./config.json ~/config.json
+
+cmd homebridge

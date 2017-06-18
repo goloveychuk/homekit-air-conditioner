@@ -1,0 +1,8 @@
+from ubuntu
+run apt-get update && apt-get install -y python python-pip
+
+run pip install broadlink flask
+
+add ./thermostat.py ./thermostat.py
+
+cmd python thermostat.py

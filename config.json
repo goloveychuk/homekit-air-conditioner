@@ -1,0 +1,20 @@
+{
+    "bridge": {
+        "name": "Homebridge",
+        "username": "CC:22:3D:E3:CE:30",
+        "port": 51826,
+        "pin": "021-15-354"
+    },
+    
+    "description": "This is an example configuration file with one fake accessory and one fake platform. You can use this as a template for creating your own configuration file containing devices you actually own.",
+
+    "accessories": [
+           {
+               "accessory": "Thermostat",
+               "name": "Thermostat Demo",
+               "apiroute": "http://127.0.0.1:5000",
+               "maxTemp": 30,
+               "minTemp": 18
+        }
+    ]
+}
