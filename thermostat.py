@@ -17,15 +17,17 @@ class Device(object):
         
     def send_data(self, data):
         try:
-            self.device.send_data(data)
+            return self.device.send_data(data)
         except:
             self.connect()
-
+            raise
+            
     def check_temperature(self):
         try:
-            self.device.check_temperature()
+            return self.device.check_temperature()
         except:
             self.connect()
+            raise
 
 
 device = Device()
