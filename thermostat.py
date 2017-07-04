@@ -1,6 +1,6 @@
 import broadlink
 import json
-
+from time import time
 
 
 
@@ -14,7 +14,9 @@ class Device(object):
         devices = broadlink.discover(timeout=15)
         self.device = devices[0]
         self.device.auth()
-        
+        self.last_checked_temp = None
+        self.prev_temp = 19
+
     def send_data(self, data):
         try:
             return self.device.send_data(data)
@@ -23,8 +25,16 @@ class Device(object):
             raise
             
     def check_temperature(self):
+        if self.last_checked_temp is not None and time() - self.last_checked_temp < 60:
+            return self.prev_temp
+
+        self.last_checked_temp = time()
+
         try:
-            return self.device.check_temperature()
+            self.prev_temp = self.device.check_temperature()
+            print('current temp {}'.format(self.prev_temp))
+            return self.prev_temp
+            
         except:
             self.connect()
             raise
