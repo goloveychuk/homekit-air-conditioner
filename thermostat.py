@@ -139,7 +139,7 @@ class State:
     def update(self):
         currentTemp = device.check_temperature()
         print(currentTemp)
-        self.currentTemperature = int(currentTemp)
+        self.currentTemperature = round(currentTemp)
 
 
     def send(self):
