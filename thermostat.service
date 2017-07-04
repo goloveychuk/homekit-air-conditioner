@@ -1,0 +1,14 @@
+[Unit]
+Description=Thermostat
+After=network-online.target
+[Service]
+Type=idle
+User=pi
+Environment=FLASK_APP=/home/pi/homekit-air-conditioner/thermostat.py
+ExecStart=/usr/local/bin/flask run --port=8003
+Restart=always
+RestartSec=10
+StartLimitInterval=30
+StartLimitBurst=20
+[Install]
+WantedBy=multi-user.target

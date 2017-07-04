@@ -1,0 +1,13 @@
+[Unit]
+Description=Homebridge
+After=network-online.target
+[Service]
+Type=idle
+User=pi
+ExecStart=/usr/bin/homebridge
+Restart=always
+RestartSec=10
+StartLimitInterval=30
+StartLimitBurst=20
+[Install]
+WantedBy=multi-user.target

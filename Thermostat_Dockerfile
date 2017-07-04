@@ -1,4 +1,7 @@
-from ubuntu
+
+#dont work on raspberry. should inherit from other image
+
+from ubuntu:precise
 run apt-get update && apt-get install -y python python-pip
 
 run pip install broadlink flask

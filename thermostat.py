@@ -1,12 +1,34 @@
 import broadlink
 import json
 
-devices = broadlink.discover(timeout=15)
 
-device = devices[0]
 
-device.auth()
 
+
+
+class Device(object):
+    def __init__(self):
+        self.connect()
+
+    def connect(self):
+        devices = broadlink.discover(timeout=15)
+        self.device = devices[0]
+        self.device.auth()
+        
+    def send_data(self, data):
+        try:
+            self.device.send_data(data)
+        except:
+            self.connect()
+
+    def check_temperature(self):
+        try:
+            self.device.check_temperature()
+        except:
+            self.connect()
+
+
+device = Device()
 
 ONE = 48
 ZERO = 114
@@ -156,5 +178,3 @@ def set_mode(mode):
     state.targetHeatingCoolingState = mode
     state.send()    
     return 'ok', 200
-
-app.run()
