@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        // "module": "commonjs",
+        "strict": true,
+        "outDir": "./dist"
+    },
+    "include": [
+        "./app"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

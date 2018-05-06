@@ -1,0 +1,27 @@
+{
+  "name": "homekit-air-conditioner",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "broadlinkjs-rm": "^0.6.0",
+    "homebridge": "^0.4.42",
+    "lodash": "^4.17.10",
+    "typescript": "^2.8.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "homebridge",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goloveychuk/homekit-air-conditioner.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/goloveychuk/homekit-air-conditioner/issues"
+  },
+  "homepage": "https://github.com/goloveychuk/homekit-air-conditioner#readme"
+}
