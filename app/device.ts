@@ -1,4 +1,6 @@
-const Broadlink = require('broadlinkjs-rm')
+import { EventEmitter } from "events";
+
+const BroadlinkDriver = require("broadlinkjs-rm");
 
 const Codes = {
   ONE: 48,
@@ -90,23 +92,68 @@ function payload(enabled: boolean, mode: Modes, temp: number) {
   return s;
 }
 
+type BroadlinkDevice = EventEmitter & {
+  checkTemperature(): void;
+  sendData(data: Buffer): void;
+};
+
 export class Device {
-  broadlink: any
-  constructor() {
-    this.broadlink = new Broadlink()
-    this.connect()
+  private device?: BroadlinkDevice;
 
-  }
-  connect() {
+  private temperatureResolve?: (data: number) => void;
 
+  constructor() {}
+
+  private onTemperature = (data: number) => {
+    if (this.temperatureResolve) {
+      this.temperatureResolve(data);
+      this.temperatureResolve = undefined;
+    }
+  };
+
+  async connect() {
+    if (this.device) {
+      return
+    }
+    const broadlink = new BroadlinkDriver();
+    broadlink.discover();
+
+    return new Promise(resolve => {
+      broadlink.on("deviceReady", (device: BroadlinkDevice) => {
+        this.device = device;
+        this.device.on("temperature", (data: number) => {
+          this.onTemperature(data);
+        });
+        resolve();
+      });
+    });
   }
-  send(enabled: boolean, mode: Modes, targetTemp: number) {
+
+  async getTemperature(): Promise<number> {
+    await this.connect()
+    if (this.device === undefined) {
+      throw new Error("device is undef");
+    }
+    const prom = new Promise<number>(resolve => {
+      this.temperatureResolve = resolve;
+    });
+    this.device.checkTemperature();
+    return prom;
+  }
+
+  async send(enabled: boolean, mode: Modes, targetTemp: number) {
+    await this.connect()
+    
+    if (this.device === undefined) {
+      throw new Error("device is undef");
+    }
+
     const p = payload(enabled, mode, targetTemp);
 
-    const msg = serialize(p);
-    // this.broadlink.send_data(msg);
-  }
-  getCurrentTemperature() {
-    return 23
+    const msg =  serialize(p);
+
+    const buf = Buffer.from(msg)
+
+    this.device.sendData(buf);
   }
 }

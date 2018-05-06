@@ -109,7 +109,7 @@ export class Thermostat {
   //     // this.service.setCharacteristic(Characteristic.CurrentHeatingCoolingState, this.currentHeatingCoolingState); //todo
   // }
 
-  sendStateToDevice = () => {
+  sendStateToDevice = async () => {
     let enabled = true;
     let mode: DeviceMode;
     switch (this.state.get("targetHeatingCoolingState")) {
@@ -130,30 +130,30 @@ export class Thermostat {
         throw new Error("smth wrong");
     }
     const targetTemp = this.state.get("targetTemperature");
-    this.device.send(enabled, mode, targetTemp);
+    await this.device.send(enabled, mode, targetTemp);
   };
 
-  setTargetHeatingCoolingState = (value: number, callback: Callback) => {
+  setTargetHeatingCoolingState = async (value: number, callback: Callback) => {
     if (value === undefined) {
       callback(null); //Some stuff call this without value doing shit with the rest
       return;
     }
     this.state.set("targetHeatingCoolingState", value);
-    this.sendStateToDevice();
+    await this.sendStateToDevice();
     callback(null);
   };
 
-  getCurrentTemperature = (callback: Callback) => {
+  getCurrentTemperature = async (callback: Callback) => {
     //todo update, debounce
-    const curTemp = this.device.getCurrentTemperature();
+    const curTemp = await this.device.getTemperature(); 
 
     this.state.set("currentTemperature", curTemp);
     callback(null, this.state.get("currentTemperature"));
   };
 
-  setTargetTemperature = (value: number, callback: Callback) => { //debounce
+  setTargetTemperature = async (value: number, callback: Callback) => { //debounce
     this.state.set("targetTemperature", value);
-    this.sendStateToDevice();
+    await this.sendStateToDevice();
 
     callback(null);
   };
