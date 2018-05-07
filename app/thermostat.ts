@@ -91,7 +91,6 @@ export class Thermostat {
 
   constructor(log: Logger, config: any) {
     this.log = log;
-    log("huy");
     this.config = new Config(config.name);
     this.name = this.config.name;
     this.state = new State();
@@ -105,6 +104,7 @@ export class Thermostat {
 
 
   private onTempChanged = (val: number) => {
+    this.state.set('currentTemperature', val)
     this.service.setCharacteristic(Characteristic.CurrentTemperature, val);
   }
 
@@ -132,12 +132,7 @@ export class Thermostat {
     };
   }
 
-  // Required
-  // getCurrentHeatingCoolingState = (callback: Callback) => {
-  //     // this.service.setCharacteristic(Characteristic.CurrentHeatingCoolingState, this.currentHeatingCoolingState); //todo
-  // }
-
-  _sendStateToDevice = async () => {
+  sendStateToDevice = async () => {
     let enabled = true;
     let mode: DeviceMode;
     switch (this.state.get("targetHeatingCoolingState")) {
@@ -161,11 +156,11 @@ export class Thermostat {
     await this.device.send(enabled, mode, targetTemp);
   };
 
-  sendStateToDevice = debounce(this._sendStateToDevice, 700);
 
   setTargetHeatingCoolingState = async (value: number, callback: Callback) => {
+    this.log('setTargetHeatingCoolingState', value)
     if (value === undefined) {
-      callback(null); //Some stuff call this without value doing shit with the rest
+      callback(null);
       return;
     }
     this.state.set("targetHeatingCoolingState", value);
@@ -173,20 +168,24 @@ export class Thermostat {
     await this.sendStateToDevice();
   };
 
-  getCurrentTemperature = async (callback: Callback) => {
+  getCurrentTemperature = async (callback: Callback) => {   
+    this.log('getCurrentTemperature')
     const curTemp = await this.getTempCached()
     this.state.set("currentTemperature", curTemp);
     callback(null, this.state.get("currentTemperature"));
   };
-
+  private turnOnOnSetTemp() {
+    // if this.state.get('currentHeatingCoolingState')
+  }
+  sendStateToDeviceCached = debounce(this.sendStateToDevice, 700);
+  
   setTargetTemperature = async (value: number, callback: Callback) => {
-    this.log("running setting temp", value);
+    this.log('setTargetTemperature', value)
     this.state.set("targetTemperature", value);
     callback(null);
-    await this.sendStateToDevice();
+    await this.sendStateToDeviceCached();
   };
 
-  // setTargetTemperature = debounce(this._setTargetTemperature, 1000)
 
   getServices() {
     var informationService = new HomeBridgeService.AccessoryInformation();
@@ -220,24 +219,6 @@ export class Thermostat {
       .on("get", this.getStateValue("temperatureDisplayUnits"))
       .on("set", this.setStateValue("temperatureDisplayUnits"));
 
-    // Optional Characteristics
-    this.service
-      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-      .on("get", this.getStateValue("currentRelativeHumidity"));
-
-    this.service
-      .getCharacteristic(Characteristic.TargetRelativeHumidity)
-      .on("get", this.getStateValue("targetRelativeHumidity"))
-      .on("set", this.setStateValue("targetRelativeHumidity"));
-    /*
-		this.service
-			.getCharacteristic(Characteristic.CoolingThresholdTemperature)
-			.on('get', this.getCoolingThresholdTemperature);
-		*/
-
-    this.service
-      .getCharacteristic(Characteristic.HeatingThresholdTemperature)
-      .on("get", this.getStateValue("heatingThresholdTemperature"));
 
     this.service.getCharacteristic(Characteristic.Name).on("get", this.getName);
 
