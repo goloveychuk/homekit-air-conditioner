@@ -20,6 +20,7 @@ enum HeatingCoolingState {
   COOL = 2,
   AUTO = 3
 }
+const DEFAULT_HEATING_COOLING_STATE = HeatingCoolingState.COOL
 
 type Callback = (err: Error | null, val?: number | string) => void;
 
@@ -47,7 +48,7 @@ function TempCacheSub(
   setInterval(async () => {
     const t = await getTemp();
     cb(t);
-  }, 60 * 1000);
+  }, 5 * 60 * 1000);
 
   return getTemp;
 }
@@ -59,13 +60,13 @@ class State {
   currentTemperature = 19;
   currentRelativeHumidity = 0.7;
 
-  currentHeatingCoolingState = HeatingCoolingState.OFF;
   targetTemperature = 21;
   targetRelativeHumidity = 0.5;
   heatingThresholdTemperature = 25;
   coolingThresholdTemperature = 5;
 
   targetHeatingCoolingState = HeatingCoolingState.OFF;
+  previousHeatingCoolingState = HeatingCoolingState.OFF;
 
   get<K extends keyof this>(key: K): this[K] {
     // console.log("getting", key);
@@ -153,15 +154,20 @@ export class Thermostat {
         throw new Error("smth wrong");
     }
     const targetTemp = this.state.get("targetTemperature");
-    await this.device.send(enabled, mode, targetTemp);
+    // await this.device.send(enabled, mode, targetTemp);
   };
 
 
-  setTargetHeatingCoolingState = async (value: number, callback: Callback) => {
+  setTargetHeatingCoolingState = async (value: HeatingCoolingState, callback: Callback) => {
     this.log('setTargetHeatingCoolingState', value)
     if (value === undefined) {
       callback(null);
       return;
+    }
+    if (value === HeatingCoolingState.OFF) {
+      const curHeatCoolState = this.state.get('targetHeatingCoolingState')
+      const prevCoolState = curHeatCoolState !== HeatingCoolingState.OFF ? curHeatCoolState : DEFAULT_HEATING_COOLING_STATE
+      this.state.set('previousHeatingCoolingState', prevCoolState)
     }
     this.state.set("targetHeatingCoolingState", value);
     callback(null);
@@ -175,13 +181,17 @@ export class Thermostat {
     callback(null, this.state.get("currentTemperature"));
   };
   private turnOnOnSetTemp() {
-    // if this.state.get('currentHeatingCoolingState')
+    if (this.state.get('targetHeatingCoolingState') === HeatingCoolingState.OFF) {
+      this.state.set('targetHeatingCoolingState', this.state.get('previousHeatingCoolingState'))
+      this.service.setCharacteristic(Characteristic.TargetHeatingCoolingState, this.state.get('targetHeatingCoolingState'));    
+    }
   }
   sendStateToDeviceCached = debounce(this.sendStateToDevice, 700);
   
   setTargetTemperature = async (value: number, callback: Callback) => {
     this.log('setTargetTemperature', value)
     this.state.set("targetTemperature", value);
+    this.turnOnOnSetTemp()
     callback(null);
     await this.sendStateToDeviceCached();
   };
@@ -198,7 +208,7 @@ export class Thermostat {
     // Required Characteristics
     this.service
       .getCharacteristic(Characteristic.CurrentHeatingCoolingState)
-      .on("get", this.getStateValue("currentHeatingCoolingState"));
+      .on("get", this.getStateValue("targetHeatingCoolingState"));
 
     this.service
       .getCharacteristic(Characteristic.TargetHeatingCoolingState)
