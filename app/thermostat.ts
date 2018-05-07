@@ -1,26 +1,17 @@
 import { Device, Modes as DeviceMode } from "./device";
-
+import { debounce } from "lodash";
 
 declare global {
   var HomeBridgeService: any;
   var Characteristic: any;
-  // namespace NodeJS {
-  //   interface Global {
-     
-  //   }
-  // }
 }
 
-
-type Logger = (...data: string[]) => void;
+type Logger = (...data: any[]) => void;
 
 class Config {
   maxTemp = 30;
   minTemp = 18;
-  constructor(public name: string){
-
-  }
-
+  constructor(public name: string) {}
 }
 
 enum HeatingCoolingState {
@@ -31,6 +22,35 @@ enum HeatingCoolingState {
 }
 
 type Callback = (err: Error | null, val?: number | string) => void;
+
+function TempCacheSub(
+  deviceGetTemp: () => Promise<number>,
+  cb: (value: number) => void
+) {
+  let lastTemp: number | undefined = undefined;
+  let lastGot: number | undefined = undefined;
+
+  const getTemp = async (): Promise<number> => {
+    const now = new Date().getTime();
+    if (
+      lastGot === undefined ||
+      lastTemp === undefined ||
+      now - lastGot > 10_000
+    ) {
+      const temp = await deviceGetTemp();
+      lastTemp = temp;
+      lastGot = now;
+    }
+    return lastTemp;
+  };
+
+  setInterval(async () => {
+    const t = await getTemp();
+    cb(t);
+  }, 60 * 1000);
+
+  return getTemp;
+}
 
 class State {
   //Characteristic.TemperatureDisplayUnits.CELSIUS = 0;
@@ -48,12 +68,12 @@ class State {
   targetHeatingCoolingState = HeatingCoolingState.OFF;
 
   get<K extends keyof this>(key: K): this[K] {
-    console.log('getting', key)
+    // console.log("getting", key);
     return this[key];
   }
   set(key: keyof this, value: any) {
-    console.log('setting', key, value)
-    
+    // console.log("setting", key, value);
+
     this[key] = value;
   }
 }
@@ -66,20 +86,28 @@ export class Thermostat {
   config: Readonly<Config>;
   service: any;
   device: Device;
-  name: string
+  name: string;
+  getTempCached: Device['getTemperature']
 
   constructor(log: Logger, config: any) {
-
     this.log = log;
-    log('huy')
+    log("huy");
     this.config = new Config(config.name);
-    this.name = this.config.name
+    this.name = this.config.name;
     this.state = new State();
 
     this.device = new Device();
-    
+
     this.service = new HomeBridgeService.Thermostat(this.config.name);
+
+    this.getTempCached = TempCacheSub(this.device.getTemperature.bind(this.device), this.onTempChanged)
   }
+
+
+  private onTempChanged = (val: number) => {
+    this.service.setCharacteristic(Characteristic.CurrentTemperature, val);
+  }
+
 
   //Start
   identify = (callback: Callback) => {
@@ -109,7 +137,7 @@ export class Thermostat {
   //     // this.service.setCharacteristic(Characteristic.CurrentHeatingCoolingState, this.currentHeatingCoolingState); //todo
   // }
 
-  sendStateToDevice = async () => {
+  _sendStateToDevice = async () => {
     let enabled = true;
     let mode: DeviceMode;
     switch (this.state.get("targetHeatingCoolingState")) {
@@ -133,30 +161,32 @@ export class Thermostat {
     await this.device.send(enabled, mode, targetTemp);
   };
 
+  sendStateToDevice = debounce(this._sendStateToDevice, 700);
+
   setTargetHeatingCoolingState = async (value: number, callback: Callback) => {
     if (value === undefined) {
       callback(null); //Some stuff call this without value doing shit with the rest
       return;
     }
     this.state.set("targetHeatingCoolingState", value);
-    await this.sendStateToDevice();
     callback(null);
+    await this.sendStateToDevice();
   };
 
   getCurrentTemperature = async (callback: Callback) => {
-    //todo update, debounce
-    const curTemp = await this.device.getTemperature(); 
-
+    const curTemp = await this.getTempCached()
     this.state.set("currentTemperature", curTemp);
     callback(null, this.state.get("currentTemperature"));
   };
 
-  setTargetTemperature = async (value: number, callback: Callback) => { //debounce
+  setTargetTemperature = async (value: number, callback: Callback) => {
+    this.log("running setting temp", value);
     this.state.set("targetTemperature", value);
-    await this.sendStateToDevice();
-
     callback(null);
+    await this.sendStateToDevice();
   };
+
+  // setTargetTemperature = debounce(this._setTargetTemperature, 1000)
 
   getServices() {
     var informationService = new HomeBridgeService.AccessoryInformation();

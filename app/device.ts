@@ -113,7 +113,7 @@ export class Device {
 
   async connect() {
     if (this.device) {
-      return
+      return;
     }
     const broadlink = new BroadlinkDriver();
     broadlink.discover();
@@ -130,7 +130,7 @@ export class Device {
   }
 
   async getTemperature(): Promise<number> {
-    await this.connect()
+    await this.connect();
     if (this.device === undefined) {
       throw new Error("device is undef");
     }
@@ -142,17 +142,17 @@ export class Device {
   }
 
   async send(enabled: boolean, mode: Modes, targetTemp: number) {
-    await this.connect()
-    
+    await this.connect();
+
     if (this.device === undefined) {
       throw new Error("device is undef");
     }
 
     const p = payload(enabled, mode, targetTemp);
 
-    const msg =  serialize(p);
+    const msg = serialize(p);
 
-    const buf = Buffer.from(msg)
+    const buf = Buffer.from(msg);
 
     this.device.sendData(buf);
   }

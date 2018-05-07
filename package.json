@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@types/lodash": "^4.14.108",
     "broadlinkjs-rm": "^0.6.0",
     "homebridge": "^0.4.42",
     "lodash": "^4.17.10",
