@@ -143,7 +143,7 @@ export class Thermostat {
         throw new Error("smth wrong");
     }
     const targetTemp = this.state.get("targetTemperature");
-    // await this.device.send(enabled, mode, targetTemp);
+    await this.device.send(enabled, mode, targetTemp);
   };
 
 
