@@ -54,27 +54,16 @@ function TempCacheSub(
 }
 
 class State {
-  //Characteristic.TemperatureDisplayUnits.CELSIUS = 0;
-  //Characteristic.TemperatureDisplayUnits.FAHRENHEIT = 1;
   temperatureDisplayUnits = Characteristic.TemperatureDisplayUnits.CELSIUS;
   currentTemperature = 19;
-  currentRelativeHumidity = 0.7;
-
   targetTemperature = 21;
-  targetRelativeHumidity = 0.5;
-  heatingThresholdTemperature = 25;
-  coolingThresholdTemperature = 5;
-
   targetHeatingCoolingState = HeatingCoolingState.OFF;
   previousHeatingCoolingState = HeatingCoolingState.OFF;
 
   get<K extends keyof this>(key: K): this[K] {
-    // console.log("getting", key);
     return this[key];
   }
   set(key: keyof this, value: any) {
-    // console.log("setting", key, value);
-
     this[key] = value;
   }
 }

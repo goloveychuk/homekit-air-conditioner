@@ -1,6 +1,6 @@
 {
     "bridge": {
-        "name": "Homebridge2",
+        "name": "Homebridge",
         "username": "CC:22:3D:E3:CE:31",
         "port": 51827,
         "pin": "021-15-355"

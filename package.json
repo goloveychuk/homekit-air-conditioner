@@ -12,7 +12,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "homebridge",
+    "start": "homebridge -U ./  -P ./homebridge-plugin",
     "build": "tsc"
   },
   "repository": {
