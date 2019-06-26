@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-const BroadlinkDriver = require("broadlinkjs-rm");
+const = require("broadlinkjs-rm");
 
 const Codes = {
   ONE: 48,
@@ -18,7 +18,7 @@ export enum Modes {
   AUTO = 0
 }
 
-function serialize(msg: number[]) {
+export function serialize(msg: number[]) {
   const s = new Array<number>();
   s.push(...Codes.HEADER);
   s.push(Codes.HEADER2);
@@ -51,7 +51,35 @@ function oneOrZero(n: number) {
   return 1;
 }
 
-function payload(enabled: boolean, mode: Modes, temp: number) {
+export function nor(a: number) {
+  if (10 < a && a < 25) {
+    return 0;
+  }
+  if (45 < a && a < 55) {
+    return 1;
+  }
+  if (80 < a && a < 130) {
+    return "X";
+  }
+  return null;
+  // return "h:" + a;
+}
+
+export function chunkArray<T>(myArray: T[], chunk_size: number) {
+  var index = 0;
+  var arrayLength = myArray.length;
+  var tempArray = [];
+
+  for (index = 0; index < arrayLength; index += chunk_size) {
+    const myChunk = myArray.slice(index, index + chunk_size);
+    // Do something if you want with the group
+    tempArray.push(myChunk);
+  }
+
+  return tempArray;
+}
+
+export function payload(enabled: boolean, mode: Modes, temp: number) {
   temp = temp - 17;
   const s = new Array<number>();
 
@@ -92,68 +120,10 @@ function payload(enabled: boolean, mode: Modes, temp: number) {
   return s;
 }
 
-type BroadlinkDevice = EventEmitter & {
-  checkTemperature(): void;
-  sendData(data: Buffer): void;
-};
-
-export class Device {
-  private device?: BroadlinkDevice;
-
-  private temperatureResolve?: (data: number) => void;
-
-  constructor() {}
-
-  private onTemperature = (data: number) => {
-    if (this.temperatureResolve) {
-      this.temperatureResolve(data);
-      this.temperatureResolve = undefined;
-    }
+export type BroadlinkDevice = any &
+  EventEmitter & {
+    checkTemperature(): void;
+    sendData(data: Buffer): void;
   };
 
-  async connect() {
-    if (this.device) {
-      return;
-    }
-    const broadlink = new BroadlinkDriver();
-    broadlink.discover();
 
-    return new Promise(resolve => {
-      broadlink.on("deviceReady", (device: BroadlinkDevice) => {
-        this.device = device;
-        this.device.on("temperature", (data: number) => {
-          this.onTemperature(data);
-        });
-        resolve();
-      });
-    });
-  }
-
-  async getTemperature(): Promise<number> {
-    await this.connect();
-    if (this.device === undefined) {
-      throw new Error("device is undef");
-    }
-    const prom = new Promise<number>(resolve => {
-      this.temperatureResolve = resolve;
-    });
-    this.device.checkTemperature();
-    return prom;
-  }
-
-  async send(enabled: boolean, mode: Modes, targetTemp: number) {
-    await this.connect();
-
-    if (this.device === undefined) {
-      throw new Error("device is undef");
-    }
-
-    const p = payload(enabled, mode, targetTemp);
-
-    const msg = serialize(p);
-
-    const buf = Buffer.from(msg);
-
-    this.device.sendData(buf);
-  }
-}

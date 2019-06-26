@@ -13,7 +13,8 @@
   "devDependencies": {},
   "scripts": {
     "start": "homebridge -U ./  -P ./homebridge-plugin",
-    "build": "tsc"
+    "build": "tsc",
+    "watch": "tsc --watch"
   },
   "repository": {
     "type": "git",

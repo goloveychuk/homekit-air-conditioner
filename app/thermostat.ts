@@ -1,4 +1,5 @@
-import { Device, Modes as DeviceMode } from "./device";
+import { Modes as DeviceMode } from "./device";
+import { Device } from "./Device.1";
 import { debounce } from "lodash";
 
 declare global {
